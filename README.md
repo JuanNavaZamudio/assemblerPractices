@@ -10,7 +10,7 @@ c:\> tasm program.asm
 c:\> tlink program.obj
 ```
 
-this generates a executable file: program.exe
+this generates an executable file: program.exe
 
 
 ## Login window view
