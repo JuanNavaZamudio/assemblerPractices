@@ -1,7 +1,17 @@
 # assemblerPractices
 practices with assembler for 16bit x86
 
-examples:
+To compile needs TASM and TLINK as linker
+
+in command line:
+```
+c:\> tasm program.asm
+
+c:\> tlink program.obj
+```
+
+this generates a executable file: program.exe
+
 
 ## Login window view
 
