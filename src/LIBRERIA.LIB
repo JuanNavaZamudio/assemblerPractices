@@ -1,0 +1,271 @@
+
+MUESTRAFORMULARIO MACRO
+		CPDATA
+		DIBUJARECT (0000H),(184FH),(71H)
+		DIBUJARECT (0500H),(134FH),(41H)
+		COLOCACUR (0),(0)
+		ESCRIBIR TITULO
+		
+		ESCRIBIR NUMA
+		DIBUJARECT (071DH),(071EH),(71H)
+		
+		ESCRIBIR DEST
+		DIBUJARECT (0C1AH),(0C23H),(71H)
+		
+		ESCRIBIR HORA
+		DIBUJARECT (1121H),(1125H),(71H)
+		;ASIENTO
+		COLOCACUR (7),(29)
+		INGRESAREN NAMEPARNO
+		;DESTINO
+		COLOCACUR (12),(26)
+		INGRESAREN NAMEPARDES
+		;HORA
+		COLOCACUR (17),(33)
+		INGRESAREN NAMEPARHOR
+		;REGRESA CURSOR
+		COLOCACUR (24),(00)
+ENDM
+
+
+DIBUJARECT MACRO ROW1,COL1,ROW2,COL2,COLOR
+	MOV AX,0600H
+	XOR BH,BH
+	MOV BH,COLOR
+	MOV CH,ROW1
+	MOV CL,COL1
+	MOV DH,ROW2
+	MOV DL,COL2
+	INT 10H
+ENDM
+
+COLOCACUR MACRO RENGLON,COLUMNA
+	MOV AH,02H
+	MOV BH,00	
+	MOV DH,RENGLON
+	MOV DL,COLUMNA
+	INT 10H
+ENDM
+
+ESCRIBIR MACRO TEXTO
+	MOV AH,09H
+	LEA DX,TEXTO
+	INT 21H	
+ENDM
+
+INGRESAREN MACRO VAR
+	MOV AH,	0AH
+	LEA DX,VAR
+	INT 21H	
+ENDM
+
+LEETECLA MACRO
+	XOR AX,AX ;FUNCION 0
+	INT 16H
+ENDM
+
+DOSEXIT MACRO
+	MOV AX,4C00H
+	INT 21H
+ENDM
+
+CPDATA MACRO
+		MOV AX,@DATA
+		MOV DS,AX
+		MOV ES,AX
+ENDM
+
+
+PAUSATECLA MACRO 
+	MOV AH,10H
+	INT 16H
+ENDM
+
+SPEAKEROFF MACRO
+	IN AL,61H			;OBTIENE EL VALOR ACTUAL DEL PUERTO 61H
+	AND AL,11111100B	;FORZA A CERO LOS DOS BITS MAS BAJOS
+	OUT 61H,AL			;MANDA EL CONTENIDO DE AL PUERTO 61H
+ENDM
+
+SPEAKERON MACRO
+	IN AL,61H	;HABILITA EL TIMER DEL ALTAVOZ
+	OR AL,3		;METE UNOS EN LOS 2 PRIMEROS BITS
+	OUT 61H,AL	;MANDA EL CONTENIDO A LA DIRECCION 61H
+ENDM
+
+CURSORGRUESO MACRO
+	MOV AH,01H
+	MOV CX,0007H
+	INT 10H
+ENDM
+
+CURSORNORMAL MACRO
+	MOV AH,01H
+	MOV CX,0607H
+	INT 10H
+ENDM
+
+CORAZONPARPADEANTE MACRO
+	MOV AH,09H
+	MOV AL,03H	;CORAZON
+	MOV BH,00
+	MOV BL,0F0H	;INTERMITENCIA Y VIDEO
+	MOV CX,01	;NUMERO DE REPETICIONES
+	INT 10H
+ENDM
+
+SALIR MACRO
+	MOV AH,01
+	INT 21H
+ENDM
+
+HABILITARMOUSE MACRO
+	MOV AX,00H
+	INT 33H
+	CMP AL,00H	;SI NO LO ENCUENTRA
+	MOV AX,01H	;FUNCION QUE MUESTRA
+	INT 33H
+ENDM
+
+IMPRIMECARACTER MACRO CARACTER
+	MOV AH,0EH		;FUNCION QUE IMPRIME EL CARACTER
+	MOV AL,CARACTER	;EL CARACTER VA EN AL
+	INT 10H
+ENDM
+
+DESCONOCIDO MACRO
+	MOV AH,09
+	MOV BH,00	;PAGINA
+	MOV CX,0021	;REPETIR CARACTER
+	MOV AL,10H	;CARACTER EN HEXADECIMAL
+	MOV BL,15	;ATRIBUTO
+	INT 10H
+ENDM
+
+DIBUJALINEA MACRO
+	MOV AH,09H
+	MOV AL,0C4H
+	MOV BH,00
+	MOV BL,0FH
+	MOV CX,25
+	INT 10H
+ENDM
+
+CREARARCHIVO MACRO NOMBRE, ATRIBUTO
+	;01H NORMAL
+	;02H OCULTO
+	;04H SISTEMA
+	;07H OCULTO, SISTEMA Y SOLO LECTURA
+	;16H ARCHIVADO
+	MOV AH,3CH
+	LEA DX,NOMBRE
+	MOV CX,ATRIBUTO
+	INT 21H
+ENDM
+
+CERRARARCHIVO MACRO HANDLE
+	MOV AH,3EH
+	MOV BX,HANDLE
+	INT 21H
+ENDM
+
+BEEP MACRO FREC
+	MOV	BX,FREC			; Frequency value. Best heard between 140 (high) and 19500 (low)
+	MOV			AL,10110110B	; Binary value to initialize port 43H Timer 2
+	OUT			43H,AL			; Send it to the initializing port 43H Timer 2
+	MOV			AX,BX			; Move our Frequency value into AX
+	OUT			42H,AL			; Send Least Significant Byte (LSB) to port 42H
+	MOV			AL,AH			; Move Most Significant Byte (MSB) into AL
+	OUT			42H,AL			; Send MSB to port 42H
+	IN			AL,61H			; Get current value of port 61H
+	OR			AL,00000011B	; Forces first two bits high to turn ON the speaker
+	OUT			61H,AL			; Copy it to port 61H of the PPI Chip to turn ON the speaker
+	PAUSA
+ENDM
+
+
+BEEPT MACRO FREC
+	
+	MOV     DX,6000          ; Number of times to repeat whole routine.
+	MOV     BX,FREC             ; Frequency value.
+
+	MOV     AL, 10110110B    ; The Magic Number (use this binary number only)
+	OUT     43H, AL          ; Send it to the initializing port 43H Timer 2.
+	
+	MOV DX,150
+	CICLO:
+		MOV     AX, BX           ; Move our Frequency value into AX.
+		OUT     42H, AL          ; Send LSB to port 42H.
+		MOV     AL, AH           ; Move MSB into AL  
+		OUT     42H, AL          ; Send MSB to port 42H.
+		
+		IN AL,61H	;HABILITA EL TIMER DEL ALTAVOZ
+		OR AL,3		;METE UNOS EN LOS 2 PRIMEROS BITS
+		OUT 61H,AL	;MANDA EL CONTENIDO A LA DIRECCION 61H
+
+		MOV     CX, 3000          ; Repeat loop
+		DELAY_LOOP:              ; Here is where we loop back too.
+		LOOP    DELAY_LOOP       ; Jump repeatedly to DELAY_LOOP until CX = 0
+		
+		DEC DX
+		CMP DX,0
+	JNZ CICLO
+	
+	SPEAKEROFF
+	
+	
+ENDM
+
+BEEPT2 MACRO FREC
+	local CICLO2
+	local DELAY_LOOP2
+	MOV     DX,6000          ; Number of times to repeat whole routine.
+	MOV     BX,FREC             ; Frequency value.
+
+	MOV     AL, 10110110B    ; The Magic Number (use this binary number only)
+	OUT     43H, AL          ; Send it to the initializing port 43H Timer 2.
+	
+	MOV DX,150
+	CICLO2:
+		MOV     AX, BX           ; Move our Frequency value into AX.
+		OUT     42H, AL          ; Send LSB to port 42H.
+		MOV     AL, AH           ; Move MSB into AL  
+		OUT     42H, AL          ; Send MSB to port 42H.
+		
+		IN AL,61H	;HABILITA EL TIMER DEL ALTAVOZ
+		OR AL,3		;METE UNOS EN LOS 2 PRIMEROS BITS
+		OUT 61H,AL	;MANDA EL CONTENIDO A LA DIRECCION 61H
+
+		MOV     CX, 3000          ; Repeat loop
+		DELAY_LOOP2:              ; Here is where we loop back too.
+		LOOP    DELAY_LOOP2       ; Jump repeatedly to DELAY_LOOP until CX = 0
+		
+		DEC DX
+		CMP DX,0
+	JNZ CICLO2
+	
+	SPEAKEROFF
+	
+ENDM
+
+PAUSA2 MACRO
+	LOCAL VUELVE
+	MOV CX,60000
+	VUELVE:
+	NOP
+	LOOP VUELVE
+ENDM
+
+pausa MACRO Tiempo 
+	local xxx 
+	; Hace una pausa de Tiempo segundos (numero Tiempo es 18 cada segundo)
+	MOV ah,0h ; Leer temporizador del reloj
+	INT 1ah ; Servicio de hora BIOS
+	ADD dx,Tiempo ; Suma a dx Tiempo
+	MOV bx,dx ; Mueve Tiempo a bx
+	xxx:
+		int 1ah ; Servicio de hora BIOS
+		cmp dx,bx ; Compara dx con Tiempo
+	jne xxx ; Si no es igual salta a Bucle
+	
+ENDM ; Fin de la macro Pausa
